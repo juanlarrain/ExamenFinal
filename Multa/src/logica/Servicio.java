@@ -57,24 +57,24 @@ public class Servicio {
             rpta.setMsj("La multa para pico y placa no puede ser menor a 500");
             return rpta;
         }
-        if(multa.getMulta().equalsIgnoreCase("Alta velocidad") && multa.getMonto()<400 || multa.getMonto()>570 ){
+        if(multa.getMulta().equalsIgnoreCase("Alta velocidad") && (multa.getMonto()<400 || multa.getMonto()>570) ){
             rpta.setCodigo(3);
             rpta.setMsj("La cantidad no debe ser menor a 400 ni mayor a 570");   
              return rpta;
         }
          
-        if(multa.getMulta().equalsIgnoreCase("Luz roja") && multa.getMonto()<130 || multa.getMonto()>250 ){
+        if(multa.getMulta().equalsIgnoreCase("Luz roja") && (multa.getMonto()<130 || multa.getMonto()>250) ){
             rpta.setCodigo(4);
             rpta.setMsj("La cantidad no debe ser menor a 130 ni mayor a 250");           
            return rpta;
         }
          
-        if(multa.getMulta().equalsIgnoreCase("mal estacionado") && multa.getMonto()<100 || multa.getMonto()>190 ){
+        if(multa.getMulta().equalsIgnoreCase("mal estacionado") && (multa.getMonto()<100 || multa.getMonto()>190) ){
             rpta.setCodigo(5);
             rpta.setMsj("La cantidad no debe ser menor a 100 ni mayor a 190");   
              return rpta;
         }
-        if(multa.getMulta().equalsIgnoreCase("Pico placa") && multa.getMonto()<130 || multa.getMonto()>330 ){
+        if(multa.getMulta().equalsIgnoreCase("Pico placa") && (multa.getMonto()<130 || multa.getMonto()>330) ){
             rpta.setCodigo(6);
             rpta.setMsj("La cantidad no debe ser menor a 130 ni mayor a 330");
             return rpta;
@@ -112,10 +112,23 @@ public class Servicio {
                 rpta.setMsj("Con "+multa.getPunto()+" puntos, supera los 100 puntos maximos");
                 return rpta;
             }
+            // calcular el incremento dependiendo del puntaje
             if(cantidadPuntos + multa.getPunto() >= 50 && cantidadPuntos + multa.getPunto() < 80 ) {
-                multa.setMonto(multa.getMonto() - (multa.getMonto() * 0.1) );
+                multa.setMonto(multa.getMonto() - (multa.getMonto() * 0.1) ); // INCREMENTOS
             } else if(cantidadPuntos + multa.getPunto() >= 80) {
-                multa.setMonto(multa.getMonto() - (multa.getMonto() * 0.2) );
+                multa.setMonto(multa.getMonto() - (multa.getMonto() * 0.2) ); // INCREMENTOS
+            } else { // DESCUENTO
+                int arrCantMultUltMeses[] = getCantidadMultasUltMesByDNI(multa.getDni());
+                if(arrCantMultUltMeses == null) {
+                    rpta.setCodigo(4);
+                    rpta.setMsj("Hubo un error al calcular los puntos.");
+                    return rpta;
+                }
+                if(arrCantMultUltMeses[1] == 0) { // 0 = cant multas ult mes //// 1 = cant multas ult 2 meses
+                    multa.setMonto(multa.getMonto() - (multa.getMonto() * 0.15) );
+                } else if(arrCantMultUltMeses[0] == 0) {
+                    multa.setMonto(multa.getMonto() - (multa.getMonto() * 0.05) );
+                }
             }
             //
             Connection con = Conexion.startConeccion();
@@ -214,7 +227,7 @@ public class Servicio {
         try {
             //
             Connection con = Conexion.startConeccion();
-            String query = "SELECT COALESCE(SUM(puntos), 0) AS cantidad FROM multa WHERE dni = ?";
+            String query = "SELECT COALESCE(SUM(punto), 0) AS cantidad FROM multa WHERE dni = ?";
             PreparedStatement ps = con.prepareStatement(query);
             ps.setString(1, dni);
             ResultSet rs = ps.executeQuery();
@@ -226,6 +239,29 @@ public class Servicio {
         } catch(Exception e) {
             e.printStackTrace();
             return -1;
+        }
+    }
+    
+        public int[] getCantidadMultasUltMesByDNI(String dni) {
+        try {
+            //
+            Connection con = Conexion.startConeccion();
+            String query = "SELECT (SELECT COUNT(1) FROM `multa` WHERE dni = ? AND fec_Regi BETWEEN DATE_SUB(CURRENT_DATE, INTERVAL 1 MONTH) AND CURRENT_DATE) AS ultimo_mes,"
+                         + "       (SELECT COUNT(1) FROM `multa` WHERE dni = ? AND fec_Regi BETWEEN DATE_SUB(CURRENT_DATE, INTERVAL 2 MONTH) AND CURRENT_DATE) AS ultimo_dos_meses";
+            PreparedStatement ps = con.prepareStatement(query);
+            ps.setString(1, dni);
+            ps.setString(2, dni);
+            System.out.println("QUERY A EJECUTAR: "+ps);
+            ResultSet rs = ps.executeQuery();
+            int array_rpta[] = new int[2];
+            while(rs.next()) {
+                array_rpta[0] = rs.getInt("ultimo_mes");
+                array_rpta[1] = rs.getInt("ultimo_dos_meses");
+            }
+            return array_rpta;
+        } catch(Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }
