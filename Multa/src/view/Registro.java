@@ -313,6 +313,7 @@ public class Registro extends javax.swing.JFrame {
                         break;
                     }
                 }
+                idMultaModif = 0;
                 limpiarForm();
                 llenarTabla();
             }
@@ -369,6 +370,7 @@ public class Registro extends javax.swing.JFrame {
             Respuesta rpta = new Respuesta();
             if(idMultaModif == 0) {
                 rpta = servicio.insertarMulta(objMulta);
+                objMulta.setIdMulta(rpta.getIdGenerado());
             } else {
                 objMulta.setIdMulta(idMultaModif);
                 rpta = servicio.actualizarMulta(objMulta);

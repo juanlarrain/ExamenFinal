@@ -4,6 +4,7 @@ public class Respuesta {
     
     private int codigo;
     private String msj;
+    private int idGenerado;
 
     public int getCodigo() {
         return codigo;
@@ -21,6 +22,14 @@ public class Respuesta {
         this.msj = msj;
     }
 
+    public int getIdGenerado() {
+        return idGenerado;
+    }
+
+    public void setIdGenerado(int idGenerado) {
+        this.idGenerado = idGenerado;
+    }
+    
     @Override
     public String toString() {
         return "Respuesta{" + "codigo=" + codigo + ", msj=" + msj + '}';

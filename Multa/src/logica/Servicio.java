@@ -17,7 +17,7 @@ public class Servicio {
         try {
             Connection con = Conexion.startConeccion();
             Statement statement = con.createStatement();
-            String query = "SELECT * FROM multa ORDER BY monto DESC";
+            String query = "SELECT * FROM multa ORDER BY dni DESC";
             ResultSet rs = statement.executeQuery(query);
             
             Multa objMulta;
@@ -57,6 +57,28 @@ public class Servicio {
             rpta.setMsj("La multa para pico y placa no puede ser menor a 500");
             return rpta;
         }
+        if(multa.getMulta().equalsIgnoreCase("Alta velocidad") && multa.getMonto()<400 || multa.getMonto()>570 ){
+            rpta.setCodigo(3);
+            rpta.setMsj("La cantidad no debe ser menor a 400 ni mayor a 570");   
+             return rpta;
+        }
+         
+        if(multa.getMulta().equalsIgnoreCase("Luz roja") && multa.getMonto()<130 || multa.getMonto()>250 ){
+            rpta.setCodigo(4);
+            rpta.setMsj("La cantidad no debe ser menor a 130 ni mayor a 250");           
+           return rpta;
+        }
+         
+        if(multa.getMulta().equalsIgnoreCase("mal estacionado") && multa.getMonto()<100 || multa.getMonto()>190 ){
+            rpta.setCodigo(5);
+            rpta.setMsj("La cantidad no debe ser menor a 100 ni mayor a 190");   
+             return rpta;
+        }
+        if(multa.getMulta().equalsIgnoreCase("Pico placa") && multa.getMonto()<130 || multa.getMonto()>330 ){
+            rpta.setCodigo(6);
+            rpta.setMsj("La cantidad no debe ser menor a 130 ni mayor a 330");
+            return rpta;
+        }
         return rpta;
     }
     
@@ -79,9 +101,26 @@ public class Servicio {
                 rpta.setMsj("No se puede registrar mas de 2 multas por día");
                 return rpta;
             }
+            int cantidadPuntos = getTotalPuntosByDNI(multa.getDni());
+            if(cantidadPuntos == -1) {
+                rpta.setCodigo(-1);
+                rpta.setMsj("Hubo un error al contabilizar los puntos");
+                return rpta;
+            }
+            if(cantidadPuntos + multa.getPunto() > 100) {
+                rpta.setCodigo(-1);
+                rpta.setMsj("Con "+multa.getPunto()+" puntos, supera los 100 puntos maximos");
+                return rpta;
+            }
+            if(cantidadPuntos + multa.getPunto() >= 50 && cantidadPuntos + multa.getPunto() < 80 ) {
+                multa.setMonto(multa.getMonto() - (multa.getMonto() * 0.1) );
+            } else if(cantidadPuntos + multa.getPunto() >= 80) {
+                multa.setMonto(multa.getMonto() - (multa.getMonto() * 0.2) );
+            }
+            //
             Connection con = Conexion.startConeccion();
             String query = "INSERT INTO `sat`.`multa` (`dni`, `tipo_multa`, `monto`, `correo`, `punto`, `fec_regi`) VALUES (?, ?, ?, ?, ?, ?)";
-            PreparedStatement ps = con.prepareStatement(query);
+            PreparedStatement ps = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, multa.getDni());
             ps.setString(2, multa.getMulta());
             ps.setDouble(3, multa.getMonto());
@@ -89,6 +128,13 @@ public class Servicio {
             ps.setInt(5, multa.getPunto());
             ps.setDate(6, new java.sql.Date(multa.getFecha().getTime()) );
             ps.executeUpdate();
+            //
+            ResultSet rs = ps.getGeneratedKeys();
+            int idGenerado = 0;
+            if(rs.next()) {
+                idGenerado = rs.getInt(1);
+            }
+            rpta.setIdGenerado(idGenerado);
             rpta.setCodigo(0); // 0 = no error
             rpta.setMsj("Se registró la multa.");
         } catch (Exception e) {
@@ -158,6 +204,25 @@ public class Servicio {
                 cantidadMultas = rs.getInt("cantidad");
             }
             return cantidadMultas;
+        } catch(Exception e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+    
+    public int getTotalPuntosByDNI(String dni) {
+        try {
+            //
+            Connection con = Conexion.startConeccion();
+            String query = "SELECT COALESCE(SUM(puntos), 0) AS cantidad FROM multa WHERE dni = ?";
+            PreparedStatement ps = con.prepareStatement(query);
+            ps.setString(1, dni);
+            ResultSet rs = ps.executeQuery();
+            int cantidadPuntos = -1;
+            while(rs.next()) {
+                cantidadPuntos = rs.getInt("cantidad");
+            }
+            return cantidadPuntos;
         } catch(Exception e) {
             e.printStackTrace();
             return -1;
