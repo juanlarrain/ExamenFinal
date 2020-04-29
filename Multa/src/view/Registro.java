@@ -7,13 +7,22 @@ package view;
 
 import java.awt.List;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import static java.nio.file.Files.delete;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.event.DocumentEvent;
@@ -35,9 +44,10 @@ import net.sf.jasperreports.view.JasperViewer;
  *
  * @author diego
  */
-public class Registro extends javax.swing.JFrame {
+public class Registro extends javax.swing.JFrame implements Observer {
 
     ArrayList<Multa> lstMultas = new ArrayList<>();
+    ArrayList<Multa> lstMultasBorradas = new ArrayList<>();
     /**
      * Creates new form Registro
      */
@@ -51,7 +61,7 @@ public class Registro extends javax.swing.JFrame {
         } else {
             System.err.println("LISTA: "+lstMultas.size());
         }
-        llenarTabla();
+        llenarTabla(lstMultas);
     }
     /**
      * This method is called from within the constructor to initialize the form.
@@ -73,7 +83,6 @@ public class Registro extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         tbMultas = new javax.swing.JTable();
         btnBorrar = new javax.swing.JButton();
-        btnReporte1 = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
         txtPunto = new javax.swing.JTextField();
         btnRefresh = new javax.swing.JButton();
@@ -82,6 +91,8 @@ public class Registro extends javax.swing.JFrame {
         jLabel6 = new javax.swing.JLabel();
         txtFecha = new javax.swing.JFormattedTextField();
         cmbReporte = new javax.swing.JComboBox<>();
+        txtBuscar = new javax.swing.JTextField();
+        btnBorrados = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -122,13 +133,6 @@ public class Registro extends javax.swing.JFrame {
             }
         });
 
-        btnReporte1.setText("Reporte");
-        btnReporte1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnReporte1ActionPerformed(evt);
-            }
-        });
-
         jLabel5.setText("Punto");
 
         btnRefresh.setText("Refrescar");
@@ -154,59 +158,70 @@ public class Registro extends javax.swing.JFrame {
 
         cmbReporte.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "::: Selec. Reporte :::", "Pie", "Barras" }));
 
+        btnBorrados.setText("Borrados");
+        btnBorrados.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnBorradosActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE)
-                .addGap(19, 19, 19))
             .addGroup(layout.createSequentialGroup()
-                .addGap(29, 29, 29)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 536, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
+                                .addGap(29, 29, 29)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel3)
-                                    .addComponent(jLabel1))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel3)
+                                            .addComponent(jLabel1))
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                            .addComponent(txtDNI, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE)
+                                            .addComponent(txtMonto, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE)
+                                            .addComponent(lbDniError, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel5)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(txtPunto, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addGap(117, 117, 117)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(txtDNI, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE)
-                                    .addComponent(txtMonto, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE)
-                                    .addComponent(lbDniError, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel6)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(txtFecha, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel2)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(cmbTipos, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel4)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(txtCorreo))))
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel5)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(txtPunto, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(117, 117, 117)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel6)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(txtFecha, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel2)
-                                .addGap(18, 18, 18)
-                                .addComponent(cmbTipos, javax.swing.GroupLayout.PREFERRED_SIZE, 125, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel4)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtCorreo))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(cmbReporte, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(btnReporte1)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(btnRegistrar)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(btnBorrar)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnRefresh)
-                .addGap(36, 36, 36))
+                                .addContainerGap()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtBuscar, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(cmbReporte, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(80, 80, 80)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(btnBorrados)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(btnRegistrar)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(btnBorrar)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(btnRefresh)))))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -231,23 +246,24 @@ public class Registro extends javax.swing.JFrame {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel6)
                             .addComponent(txtFecha, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(btnBorrar)
-                            .addComponent(btnRefresh)
-                            .addComponent(btnRegistrar))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 22, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmbReporte, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(btnBorrados, javax.swing.GroupLayout.Alignment.TRAILING)))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(12, 12, 12)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel5)
-                            .addComponent(txtPunto, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 26, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(cmbReporte, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(btnReporte1))
-                        .addGap(15, 15, 15)))
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(txtPunto, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtBuscar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnRegistrar)
+                    .addComponent(btnBorrar)
+                    .addComponent(btnRefresh))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
 
         pack();
@@ -267,26 +283,83 @@ public class Registro extends javax.swing.JFrame {
 
             public void warn() {
                 String dni = txtDNI.getText();
-                btnRegistrar.setEnabled(false);
-                if(dni.length() == 0) {
-                    lbDniError.setText(null);
-                    return;
-                }
-                if(!dni.matches("[0-9]+")) {
-                    lbDniError.setText("El número de DNI es incorrecto.");
-                    return;
-                } else {
-                    lbDniError.setText(null);
-                }
-                if(dni.length() != 8) {
-                    lbDniError.setText("El número de DNI tiene que ser 8 caracteres.");
-                    return;
-                } else {
-                    lbDniError.setText(null);
-                }
-                btnRegistrar.setEnabled(true);
+                validarDNI(dni);
             }
         });
+        txtBuscar.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+              warn();
+            }
+            public void removeUpdate(DocumentEvent e) {
+              warn();
+            }
+            public void insertUpdate(DocumentEvent e) {
+              warn();
+            }
+
+            public void warn() {
+                String busqueda = txtBuscar.getText();
+                if(busqueda.length() == 0) {
+                    llenarTabla(lstMultas);
+                    return;
+                }
+                buscador(busqueda);
+            }
+        });
+        cmbReporte.addActionListener (new ActionListener () {
+        public void actionPerformed(ActionEvent e) {
+            abrirReporte(cmbReporte.getSelectedItem()+"");
+        }
+    });
+    }
+
+    private void abrirReporte(String tipoReporte) {
+        if(tipoReporte.equals("::: Selec. Reporte :::")) {
+            return;
+        }
+        if(tipoReporte.equals("Pie")) {
+            crearReporte("PieChart");return;
+        }
+        if(tipoReporte.equals("Pie")) {
+            crearReporte("barras");return;
+        }
+    }
+    
+    private void crearReporte(String nombreReporte) {
+        try {
+            JasperReport jr = (JasperReport) JRLoader.loadObject(Registro.class.getResource("../reportes/"+nombreReporte+".jasper"));
+            JasperPrint jp = JasperFillManager.fillReport(jr, null, Conexion.startConeccion());
+            JasperViewer jv = new JasperViewer(jp, false);
+            jv.show();
+        } catch (Exception e) {
+        }
+    }
+    
+    private void buscador(String busqueda) {
+        Predicate<Multa> byDni = multa -> multa.getDni().contains(busqueda);
+        ArrayList<Multa> listaFiltrada = (ArrayList) lstMultas.stream().filter(byDni).collect(Collectors.toList());
+        llenarTabla(listaFiltrada);
+    }
+    
+    private void validarDNI(String dni) {
+        btnRegistrar.setEnabled(false);
+        if(dni.length() == 0) {
+            lbDniError.setText(null);
+            return;
+        }
+        if(!dni.matches("[0-9]+")) {
+            lbDniError.setText("El número de DNI es incorrecto.");
+            return;
+        } else {
+            lbDniError.setText(null);
+        }
+        if(dni.length() != 8) {
+            lbDniError.setText("El número de DNI tiene que ser 8 caracteres.");
+            return;
+        } else {
+            lbDniError.setText(null);
+        }
+        btnRegistrar.setEnabled(true);
     }
     
     int idMultaModif = 0;
@@ -323,12 +396,13 @@ public class Registro extends javax.swing.JFrame {
                 for(Multa m : lstMultas) {
                     if(m.getIdMulta() == idMultaModif) {
                         lstMultas.remove(m);
+                        lstMultasBorradas.add(m);
                         break;
                     }
                 }
                 idMultaModif = 0;
                 limpiarForm();
-                llenarTabla();
+                llenarTabla(lstMultas);
             }
             JOptionPane.showMessageDialog(this, rpta.getMsj());
         }
@@ -338,7 +412,7 @@ public class Registro extends javax.swing.JFrame {
         // TODO add your handling code here:
         Servicio servicio = new Servicio();
         lstMultas = servicio.getMultas();
-        llenarTabla();
+        llenarTabla(lstMultas);
     }//GEN-LAST:event_btnRefreshActionPerformed
 
     private void btnRegistrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRegistrarActionPerformed
@@ -404,7 +478,7 @@ public class Registro extends javax.swing.JFrame {
                     }
                 }
                 limpiarForm();
-                llenarTabla();
+                llenarTabla(lstMultas);
             }
             JOptionPane.showMessageDialog(this, rpta.getMsj());
         } catch (Exception e) {
@@ -412,19 +486,12 @@ public class Registro extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnRegistrarActionPerformed
 
-    private void btnReporte1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnReporte1ActionPerformed
+    private void btnBorradosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBorradosActionPerformed
         // TODO add your handling code here:
-        try {
-            JasperReport jr = (JasperReport) JRLoader.loadObject(Registro.class.getResource("../reportes/PieChart.jasper"));
-//            Map parametros = new HashMap<String, Object>();
-//            parametros.put("PRECIO", 1200);
-//            parametros.put("PRECIO2", 3300);
-            JasperPrint jp = JasperFillManager.fillReport(jr, null, Conexion.startConeccion());
-            JasperViewer jv = new JasperViewer(jp);
-            jv.show();
-        } catch (Exception e) {
-        }
-    }//GEN-LAST:event_btnReporte1ActionPerformed
+        Borrados frame = new Borrados(lstMultasBorradas, regiInstance);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setVisible(true);
+    }//GEN-LAST:event_btnBorradosActionPerformed
 
     private void limpiarForm() {
         txtDNI.setText(null);
@@ -437,13 +504,13 @@ public class Registro extends javax.swing.JFrame {
         txtDNI.setEnabled(true);
     }
     
-    private void llenarTabla() {
+    private void llenarTabla(ArrayList<Multa> lista) {
         DefaultTableModel model = new DefaultTableModel(new String[]{"#", "DNI", "Multa", "Monto", "Correo", "Punto", "Id"}, 0);
         
 //        DefaultTableModel model = (DefaultTableModel) tbMultas.getModel();
 //        model.setNumRows(0);
         int i = 1;
-        for(Multa m : lstMultas) {
+        for(Multa m : lista) {
             model.addRow(new Object[]{i, m.getDni(), m.getMulta(), m.getMonto(), m.getCorreo(), m.getPunto(), m.getIdMulta()});
             i++;
         }
@@ -459,9 +526,28 @@ public class Registro extends javax.swing.JFrame {
         tbMultas.getSelectionModel().addListSelectionListener(lel);
         jScrollPane1.setViewportView(tbMultas);
     }
+    
+    @Override
+    public void update(Observable o, Object arg) { // RECIBO LO ENVIADO POR EL changeData()
+        Multa multRest = (Multa) arg;
+        System.err.println(multRest.getCorreo());
+        /////
+        Servicio servicio = new Servicio();
+        Respuesta rpta = new Respuesta();
+        rpta = servicio.insertarMulta(multRest);
+        multRest.setIdMulta(rpta.getIdGenerado());
+        if(rpta.getCodigo() == 0) {
+            lstMultas.add(multRest);
+            limpiarForm();
+            llenarTabla(lstMultas);
+        }
+        JOptionPane.showMessageDialog(this, rpta.getMsj());
+    }
     /**
      * @param args the command line arguments
      */
+    
+    static Registro regiInstance = new Registro();
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -489,16 +575,16 @@ public class Registro extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Registro().setVisible(true);
+                regiInstance.setVisible(true);
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnBorrados;
     private javax.swing.JButton btnBorrar;
     private javax.swing.JButton btnRefresh;
     private javax.swing.JButton btnRegistrar;
-    private javax.swing.JButton btnReporte1;
     private javax.swing.JComboBox<String> cmbReporte;
     private javax.swing.JComboBox<String> cmbTipos;
     private javax.swing.JLabel jLabel1;
@@ -510,10 +596,12 @@ public class Registro extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lbDniError;
     private javax.swing.JTable tbMultas;
+    private javax.swing.JTextField txtBuscar;
     private javax.swing.JTextField txtCorreo;
     private javax.swing.JTextField txtDNI;
     private javax.swing.JFormattedTextField txtFecha;
     private javax.swing.JTextField txtMonto;
     private javax.swing.JTextField txtPunto;
     // End of variables declaration//GEN-END:variables
+
 }
