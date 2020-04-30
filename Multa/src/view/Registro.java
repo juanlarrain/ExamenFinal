@@ -22,6 +22,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
@@ -48,6 +49,7 @@ public class Registro extends javax.swing.JFrame implements Observer {
 
     ArrayList<Multa> lstMultas = new ArrayList<>();
     ArrayList<Multa> lstMultasBorradas = new ArrayList<>();
+    ArrayList<String> lstTipoMultas = new ArrayList<>();
     /**
      * Creates new form Registro
      */
@@ -56,12 +58,14 @@ public class Registro extends javax.swing.JFrame implements Observer {
         initComponents2();
         Servicio servicio = new Servicio();
         lstMultas = servicio.getMultas();
+        lstTipoMultas = servicio.getTiposMulta();
         if(lstMultas == null) {
             System.err.println("La lista es null");
         } else {
             System.err.println("LISTA: "+lstMultas.size());
         }
         llenarTabla(lstMultas);
+        llenarComboTipoMulta(lstTipoMultas);
     }
     /**
      * This method is called from within the constructor to initialize the form.
@@ -99,8 +103,6 @@ public class Registro extends javax.swing.JFrame implements Observer {
         jLabel1.setText("DNI");
 
         jLabel2.setText("Tipo");
-
-        cmbTipos.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "::: Selec. Multa :::", "Alta velocidad", "Luz roja", "Mal estacionado", "Pico placa" }));
 
         jLabel3.setText("Monto");
 
@@ -269,6 +271,15 @@ public class Registro extends javax.swing.JFrame implements Observer {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void llenarComboTipoMulta(ArrayList<String> lstTipoMultas) {
+        DefaultComboBoxModel dml = new DefaultComboBoxModel();
+        dml.addElement("::: Selec. Multa :::");
+        for (String descTipMulta : lstTipoMultas) {
+            dml.addElement(descTipMulta);
+        }
+        cmbTipos.setModel(dml);
+    }
+    
     private void initComponents2() {
         txtDNI.getDocument().addDocumentListener(new DocumentListener() {
             public void changedUpdate(DocumentEvent e) {

@@ -14,6 +14,23 @@ import model.Respuesta;
 
 public class Servicio {
     
+    public ArrayList<String> getTiposMulta() {
+        ArrayList<String> lstTiposMultas = new ArrayList<>();
+        try {
+            Connection con = Conexion.startConeccion();
+            Statement statement = con.createStatement();
+            String query = "SELECT desc_tipo_multa FROM tipo_multa ORDER BY desc_tipo_multa";
+            ResultSet rs = statement.executeQuery(query);
+            
+            while(rs.next()) {
+                lstTiposMultas.add(rs.getString("desc_tipo_multa"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return lstTiposMultas;
+    }
+    
     public ArrayList<Multa> getMultas() {
         ArrayList<Multa> lstMultas = new ArrayList<>();
         try {
