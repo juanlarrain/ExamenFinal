@@ -1,9 +1,11 @@
 package logica;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -82,6 +84,38 @@ public class Servicio {
         return rpta;
     }
     
+    public Respuesta insertarMultaProcedure(Multa multa) {
+        Respuesta rpta = new Respuesta();
+        try {
+            Connection con = Conexion.startConeccion();
+            String sql = "call insertar_multa(?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            CallableStatement callableSt = con.prepareCall(sql);
+            // PARAMETROS DE ENTRADA (IN)
+            callableSt.setString(1, multa.getDni());
+            callableSt.setDate(2, new java.sql.Date(multa.getFecha().getTime()));
+            callableSt.setInt(3, multa.getPunto());
+            callableSt.setDouble(4, multa.getMonto());
+            callableSt.setString(5, multa.getCorreo());
+            callableSt.setString(6, multa.getMulta());
+            // PARAMETROS DE SALIDA (OUT)
+            callableSt.registerOutParameter(7, Types.INTEGER);
+            callableSt.registerOutParameter(8, Types.VARCHAR);
+            callableSt.registerOutParameter(9, Types.INTEGER);
+            //Call Stored Procedure
+            callableSt.executeUpdate(); // MANDA EL QUERY A BD
+            rpta.setCodigo(callableSt.getInt(7));
+            rpta.setMsj(callableSt.getString(8));
+            rpta.setIdGenerado(callableSt.getInt(9));
+            return rpta;
+        } catch (Exception e) {
+            e.printStackTrace();
+            rpta.setCodigo(-1);
+            rpta.setMsj("Hubo un error desconocido");
+            rpta.setIdGenerado(-1);
+            return rpta;
+        }
+    }
+    
     public Respuesta insertarMulta(Multa multa) {
         Respuesta rpta = new Respuesta();
         try {
@@ -112,6 +146,7 @@ public class Servicio {
                 rpta.setMsj("Con "+multa.getPunto()+" puntos, supera los 100 puntos maximos");
                 return rpta;
             }
+            
             // calcular el incremento dependiendo del puntaje
             if(cantidadPuntos + multa.getPunto() >= 50 && cantidadPuntos + multa.getPunto() < 80 ) {
                 multa.setMonto(multa.getMonto() - (multa.getMonto() * 0.1) ); // INCREMENTOS

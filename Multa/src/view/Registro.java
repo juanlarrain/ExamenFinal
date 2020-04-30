@@ -456,7 +456,7 @@ public class Registro extends javax.swing.JFrame implements Observer {
             Servicio servicio = new Servicio();
             Respuesta rpta = new Respuesta();
             if(idMultaModif == 0) {
-                rpta = servicio.insertarMulta(objMulta);
+                rpta = servicio.insertarMultaProcedure(objMulta);
                 objMulta.setIdMulta(rpta.getIdGenerado());
             } else {
                 objMulta.setIdMulta(idMultaModif);
