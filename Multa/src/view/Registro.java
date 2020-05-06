@@ -79,7 +79,7 @@ public class Registro extends javax.swing.JFrame implements Observer {
         jLabel1 = new javax.swing.JLabel();
         txtDNI = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
-        cmbTipos = new javax.swing.JComboBox<>();
+        cmbTipos = new javax.swing.JComboBox<String>();
         jLabel3 = new javax.swing.JLabel();
         txtMonto = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
@@ -94,7 +94,7 @@ public class Registro extends javax.swing.JFrame implements Observer {
         lbDniError = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
         txtFecha = new javax.swing.JFormattedTextField();
-        cmbReporte = new javax.swing.JComboBox<>();
+        cmbReporte = new javax.swing.JComboBox<String>();
         txtBuscar = new javax.swing.JTextField();
         btnBorrados = new javax.swing.JButton();
 
@@ -158,7 +158,13 @@ public class Registro extends javax.swing.JFrame implements Observer {
 
         txtFecha.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(new javax.swing.text.DateFormatter()));
 
-        cmbReporte.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "::: Selec. Reporte :::", "Pie", "Barras" }));
+        cmbReporte.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "::: Selec. Reporte :::", "Pie", "Barras" }));
+
+        txtBuscar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtBuscarActionPerformed(evt);
+            }
+        });
 
         btnBorrados.setText("Borrados");
         btnBorrados.addActionListener(new java.awt.event.ActionListener() {
@@ -503,6 +509,10 @@ public class Registro extends javax.swing.JFrame implements Observer {
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setVisible(true);
     }//GEN-LAST:event_btnBorradosActionPerformed
+
+    private void txtBuscarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtBuscarActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtBuscarActionPerformed
 
     private void limpiarForm() {
         txtDNI.setText(null);
